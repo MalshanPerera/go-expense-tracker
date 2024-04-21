@@ -1,17 +1,14 @@
 package database
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 
-	schema "github.com/MalshanPerera/go-expense-tracker/database/schema"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var db *gorm.DB
+var db *pgxpool.Pool
 
 var (
 	database = os.Getenv("DB_DATABASE")
@@ -27,37 +24,25 @@ func createConnStr() string {
 
 func Connect() {
 	connStr := createConnStr()
-	gormDB, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 
+	// Use pgxpool for concurrent connections
+	// if you have multiple threads working with a DB at the same time, you must use pgxpool
+	db, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	err = db.Ping(context.Background())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to ping database: %v\n", err)
+		os.Exit(1)
 	}
 
-	err = schema.DBMigrate(gormDB)
-
-	if err != nil {
-		log.Fatalf("Failed to migrate the database: %v", err)
-	}
-
-	log.Println("Connected to the database")
-
-	db = gormDB
+	fmt.Println("Connected to database")
 }
 
-func Close() {
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Fatalf("Failed to close the database: %v", err)
-	}
-
-	err = sqlDB.Close()
-	if err != nil {
-		log.Fatalf("Failed to close the database: %v", err)
-	}
-
-	log.Println("Database connection closed")
-}
-
-func GetDB() *gorm.DB {
+func GetDB() *pgxpool.Pool {
 	return db
 }

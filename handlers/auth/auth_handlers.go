@@ -1,12 +1,9 @@
 package auth_handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/MalshanPerera/go-expense-tracker/controllers"
-	"github.com/MalshanPerera/go-expense-tracker/database/schema"
-	"github.com/MalshanPerera/go-expense-tracker/utils"
 )
 
 type LoginUser struct {
@@ -31,53 +28,57 @@ func Init(authController AuthControllerInterface) http.Handler {
 
 func loginHandler(authController AuthControllerInterface, w http.ResponseWriter, r *http.Request) {
 
-	var user LoginUser
-	if err := utils.ParseJSON(r, &user); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
-	}
+	// var user LoginUser
+	// if err := utils.ParseJSON(r, &user); err != nil {
+	// 	utils.WriteError(w, http.StatusBadRequest, err)
+	// 	return
+	// }
 
-	loggedInUser, err := authController.Login(user.Email, user.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// err := authController.Login(user.Email, user.Password)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 
-	user = LoginUser{
-		Email:    loggedInUser.Email,
-		Password: loggedInUser.Password,
-	}
+	// user = LoginUser{
+	// 	Email:    loggedInUser.Email,
+	// 	Password: loggedInUser.Password,
+	// }
 
-	userJson, err := json.Marshal(user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// userJson, err := json.Marshal(user)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(userJson)
+	// w.Header().Set("Content-Type", "application/json")
+	// w.Write(userJson)
+
+	w.Write([]byte("Login Handler"))
 }
 
 func registerHandler(authController AuthControllerInterface, w http.ResponseWriter, r *http.Request) {
 
-	var user schema.User
-	if err := utils.ParseJSON(r, &user); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
-	}
+	// var user schema.User
+	// if err := utils.ParseJSON(r, &user); err != nil {
+	// 	utils.WriteError(w, http.StatusBadRequest, err)
+	// 	return
+	// }
 
-	registeredUser, err := authController.Register(user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// registeredUser, err := authController.Register(user)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 
-	userJson, err := json.Marshal(registeredUser)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// userJson, err := json.Marshal(registeredUser)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(userJson)
+	// w.Header().Set("Content-Type", "application/json")
+	// w.Write(userJson)
+
+	w.Write([]byte("Register Handler"))
 }

@@ -7,10 +7,10 @@ import (
 	"github.com/MalshanPerera/go-expense-tracker/database"
 	auth_handlers "github.com/MalshanPerera/go-expense-tracker/handlers/auth"
 	expense_handlers "github.com/MalshanPerera/go-expense-tracker/handlers/expense"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var db *gorm.DB
+var db *pgxpool.Pool
 
 func RegisterRoutes() http.Handler {
 	db = database.GetDB()

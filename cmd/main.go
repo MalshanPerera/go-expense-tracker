@@ -17,6 +17,7 @@ import (
 
 func main() {
 	database.Connect()
+	defer database.Close()
 
 	server := server.NewServer()
 

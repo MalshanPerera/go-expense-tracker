@@ -5,20 +5,19 @@ import (
 
 	"github.com/MalshanPerera/go-expense-tracker/controllers"
 	"github.com/MalshanPerera/go-expense-tracker/database"
+	"github.com/MalshanPerera/go-expense-tracker/database/sqlc"
 	auth_handlers "github.com/MalshanPerera/go-expense-tracker/handlers/auth"
 	expense_handlers "github.com/MalshanPerera/go-expense-tracker/handlers/expense"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var db *pgxpool.Pool
-
 func RegisterRoutes() http.Handler {
-	db = database.GetDB()
+	db := database.GetDB()
+	queries := sqlc.New(db)
 
 	router := http.NewServeMux()
 	apiV1 := http.NewServeMux()
 
-	authController := controllers.NewAuthController(controllers.AuthControllerParams{DB: db})
+	authController := controllers.NewAuthController(controllers.AuthControllerParams{DB: db, Queries: queries})
 
 	apiV1.Handle("/auth/", auth_handlers.Init(authController))
 	apiV1.Handle("/expense/", expense_handlers.Init())

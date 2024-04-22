@@ -4,19 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/go-playground/validator/v10"
 )
 
-func WriteJSON(w http.ResponseWriter, status int, v any) error {
-	w.Header().Add("Content-Type", "application/json")
+var Validate = validator.New(validator.WithRequiredStructEnabled())
+
+func WriteJSON(w http.ResponseWriter, v interface{}, status int) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	return json.NewEncoder(w).Encode(v)
 }
 
-func WriteError(w http.ResponseWriter, status int, err error) {
-	WriteJSON(w, status, map[string]string{
+func WriteError(w http.ResponseWriter, err error, status int) {
+	WriteJSON(w, map[string]string{
 		"code":    fmt.Sprintf("%d", status),
 		"message": err.Error(),
-	})
+	}, status)
 }
 
 func ParseJSON(r *http.Request, v any) error {

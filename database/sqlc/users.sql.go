@@ -7,15 +7,17 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  "firstName", "lastName", email, password
+  "first_name", "last_name", email, password
 ) VALUES (
   $1, $2, $3, $4
 )
-RETURNING id, "firstName", "lastName", email, password, "createdAt"
+RETURNING id, first_name, last_name, email, password, created_at
 `
 
 type CreateUserParams struct {
@@ -49,17 +51,17 @@ DELETE FROM users
 WHERE id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
+func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, "firstName", "lastName", email, password, "createdAt" FROM users
+SELECT id, first_name, last_name, email, password, created_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
+func (q *Queries) GetUser(ctx context.Context, id pgtype.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUser, id)
 	var i User
 	err := row.Scan(
@@ -73,9 +75,28 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	return i, err
 }
 
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, first_name, last_name, email, password, created_at FROM users
+WHERE email = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Password,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listUsers = `-- name: ListUsers :many
-SELECT id, "firstName", "lastName", email, password, "createdAt" FROM users
-ORDER BY "createdAt" DESC
+SELECT id, first_name, last_name, email, password, created_at FROM users
+ORDER BY "created_at" DESC
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -107,9 +128,9 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET "firstName" = $1, "lastName" = $2
+SET "first_name" = $1, "last_name" = $2
 WHERE id = $1
-RETURNING id, "firstName", "lastName", email, password, "createdAt"
+RETURNING id, first_name, last_name, email, password, created_at
 `
 
 type UpdateUserParams struct {

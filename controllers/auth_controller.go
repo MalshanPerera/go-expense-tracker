@@ -50,11 +50,40 @@ func (c *AuthController) Login(ctx context.Context, userPayload modals.LoginUser
 		return nil, errors.New("invalid email or password")
 	}
 
+	accessToken, expiredAt, err := utils.CreateToken(user.ID, utils.Type.AccessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, _, err := utils.CreateToken(user.ID, utils.Type.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	session := sqlc.UpdateSessionParams{
+		UserID:       user.ID,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    expiredAt,
+	}
+
+	newSession, err := c.queries.UpdateSession(
+		ctx,
+		session,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	loggedInUser := &UserResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
+		ID:           user.ID,
+		Email:        user.Email,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		AccessToken:  newSession.AccessToken,
+		RefreshToken: newSession.RefreshToken,
+		ExpiredAt:    newSession.ExpiresAt,
+		CreatedAt:    user.CreatedAt,
 	}
 
 	return loggedInUser, nil

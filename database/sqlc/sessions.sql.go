@@ -75,3 +75,36 @@ func (q *Queries) GetSession(ctx context.Context, userID pgtype.UUID) (Session, 
 	)
 	return i, err
 }
+
+const updateSession = `-- name: UpdateSession :one
+UPDATE sessions
+SET "access_token" = $2, "refresh_token" = $3, "expires_at" = $4
+WHERE user_id = $1
+RETURNING id, user_id, access_token, refresh_token, expires_at, created_at
+`
+
+type UpdateSessionParams struct {
+	UserID       pgtype.UUID
+	AccessToken  string
+	RefreshToken string
+	ExpiresAt    int64
+}
+
+func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error) {
+	row := q.db.QueryRow(ctx, updateSession,
+		arg.UserID,
+		arg.AccessToken,
+		arg.RefreshToken,
+		arg.ExpiresAt,
+	)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}

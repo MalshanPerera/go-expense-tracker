@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/MalshanPerera/go-expense-tracker/utils"
@@ -11,7 +12,7 @@ import (
 type key string
 
 const (
-	UserIDKey key = "userId"
+	UserIDKey key = "user_id"
 )
 
 func IsAuthenticated(next http.Handler) http.Handler {
@@ -20,36 +21,36 @@ func IsAuthenticated(next http.Handler) http.Handler {
 		// Check if the user is authenticated
 
 		// Check the Authorization header
-		tokenStr := r.Header.Get("Authorization")
+		headerStr := r.Header.Get("Authorization")
 
 		// If the token is not in the Authorization header, check the cookies
-		if tokenStr == "" {
+		if headerStr == "" {
 			cookie, err := r.Cookie("token")
 			if err != nil {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				utils.WriteError(w, errors.New("unauthorized"), http.StatusUnauthorized)
 				return
 			}
-			tokenStr = cookie.Value
+			headerStr = cookie.Value
 		}
 
 		// Parse and validate the token
-		// Replace "yourSigningKey" with your actual signing key
-		token, err := utils.VerifyToken(tokenStr)
+		tokenString := headerStr[len("Bearer "):]
+		token, err := utils.VerifyToken(tokenString)
 		if err != nil {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			utils.WriteError(w, errors.New("invalid token"), http.StatusUnauthorized)
 			return
 		}
 
 		// Extract the user information from the token
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+			utils.WriteError(w, errors.New("invalid token claims"), http.StatusUnauthorized)
 			return
 		}
 
-		userId, ok := claims["userId"].(string)
+		userId, ok := claims["user_id"].(string)
 		if !ok {
-			http.Error(w, "Invalid user id", http.StatusUnauthorized)
+			utils.WriteError(w, errors.New("invalid user id"), http.StatusUnauthorized)
 			return
 		}
 

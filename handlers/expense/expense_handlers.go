@@ -7,6 +7,7 @@ import (
 func Init() http.Handler {
 	expenseHandlers := http.NewServeMux()
 
+	expenseHandlers.HandleFunc("GET /expense", getExpense)
 	expenseHandlers.HandleFunc("POST /expense", addExpense)
 	expenseHandlers.HandleFunc("PATCH /expense", updateExpense)
 	expenseHandlers.HandleFunc("DELETE /expense", deleteExpense)
@@ -14,9 +15,15 @@ func Init() http.Handler {
 	return expenseHandlers
 }
 
-func addExpense(w http.ResponseWriter, r *http.Request) {
+func getExpense(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("Get Handler"))
+	if err != nil {
+		return
+	}
+}
 
-	_, err := w.Write([]byte("Register Handler"))
+func addExpense(w http.ResponseWriter, r *http.Request) {
+	_, err := w.Write([]byte("Add Handler"))
 	if err != nil {
 		return
 	}
@@ -24,14 +31,14 @@ func addExpense(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateExpense(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Register Handler"))
+	_, err := w.Write([]byte("Update Handler"))
 	if err != nil {
 		return
 	}
 }
 
 func deleteExpense(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Register Handler"))
+	_, err := w.Write([]byte("Delete Handler"))
 	if err != nil {
 		return
 	}

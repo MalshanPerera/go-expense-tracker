@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MalshanPerera/go-expense-tracker/middlewares"
 	"github.com/MalshanPerera/go-expense-tracker/routes"
 	"github.com/rs/cors"
 )
@@ -33,9 +34,13 @@ func NewServer() *http.Server {
 		AllowCredentials: false,
 	})
 
+	stack := middlewares.CreateStack(
+		middlewares.Logger,
+	)
+
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", getPort()),
-		Handler:      routes.RegisterRoutes(),
+		Handler:      stack(routes.RegisterRoutes()),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,

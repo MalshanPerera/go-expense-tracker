@@ -1,4 +1,4 @@
-package controllers
+package services
 
 import (
 	"context"
@@ -13,26 +13,26 @@ import (
 
 type UserResponse modals.UserResponse
 
-type AuthController struct {
+type AuthService struct {
 	db      *pgxpool.Pool
 	queries *sqlc.Queries
 }
 
-type AuthControllerParams struct {
+type AuthServiceParams struct {
 	DB      *pgxpool.Pool
 	Queries *sqlc.Queries
 }
 
-type AuthControllerInterface interface {
+type AuthServiceInterface interface {
 	Login(ctx context.Context, userPayload modals.LoginUserParams) (*UserResponse, error)
 	Register(ctx context.Context, userPayload modals.CreateUserParams) (*UserResponse, error)
 }
 
-func NewAuthController(params AuthControllerParams) AuthControllerInterface {
-	return &AuthController{db: params.DB, queries: params.Queries}
+func NewAuthService(params AuthServiceParams) AuthServiceInterface {
+	return &AuthService{db: params.DB, queries: params.Queries}
 }
 
-func (c *AuthController) Login(ctx context.Context, userPayload modals.LoginUserParams) (*UserResponse, error) {
+func (c *AuthService) Login(ctx context.Context, userPayload modals.LoginUserParams) (*UserResponse, error) {
 
 	user, err := c.queries.GetUserByEmail(
 		ctx,
@@ -89,7 +89,7 @@ func (c *AuthController) Login(ctx context.Context, userPayload modals.LoginUser
 	return loggedInUser, nil
 }
 
-func (c *AuthController) Register(ctx context.Context, userPayload modals.CreateUserParams) (*UserResponse, error) {
+func (c *AuthService) Register(ctx context.Context, userPayload modals.CreateUserParams) (*UserResponse, error) {
 
 	_, err := c.queries.GetUserByEmail(ctx, userPayload.Email)
 	if err == nil {

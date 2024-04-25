@@ -3,12 +3,12 @@ package routes
 import (
 	"net/http"
 
-	"github.com/MalshanPerera/go-expense-tracker/controllers"
 	"github.com/MalshanPerera/go-expense-tracker/database"
 	"github.com/MalshanPerera/go-expense-tracker/database/sqlc"
 	auth_handlers "github.com/MalshanPerera/go-expense-tracker/handlers/auth"
 	expense_handlers "github.com/MalshanPerera/go-expense-tracker/handlers/expense"
 	"github.com/MalshanPerera/go-expense-tracker/middlewares"
+	"github.com/MalshanPerera/go-expense-tracker/services"
 )
 
 func RegisterRoutes() http.Handler {
@@ -18,9 +18,9 @@ func RegisterRoutes() http.Handler {
 	router := http.NewServeMux()
 	apiV1 := http.NewServeMux()
 
-	authController := controllers.NewAuthController(controllers.AuthControllerParams{DB: db, Queries: queries})
+	authService := services.NewAuthService(services.AuthServiceParams{DB: db, Queries: queries})
 
-	apiV1.Handle("/auth/", auth_handlers.Init(authController))
+	apiV1.Handle("/auth/", auth_handlers.Init(authService))
 
 	protectedRoutes := middlewares.CreateStack(
 		middlewares.IsAuthenticated,

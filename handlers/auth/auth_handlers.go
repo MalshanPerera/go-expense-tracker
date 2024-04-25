@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MalshanPerera/go-expense-tracker/controllers"
 	"github.com/MalshanPerera/go-expense-tracker/modals"
+	"github.com/MalshanPerera/go-expense-tracker/services"
 	"github.com/MalshanPerera/go-expense-tracker/utils"
 	"github.com/go-playground/validator/v10"
 )
 
-type AuthControllerInterface controllers.AuthControllerInterface
+type AuthControllerInterface services.AuthServiceInterface
 
 func Init(authController AuthControllerInterface) http.Handler {
 	authHandlers := http.NewServeMux()

@@ -1,4 +1,4 @@
-package auth_handlers
+package handlers
 
 import (
 	"fmt"
@@ -10,22 +10,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type AuthServiceInterface services.AuthServiceInterface
-
-func Init(authService AuthServiceInterface) http.Handler {
-	authHandlers := http.NewServeMux()
-
-	authHandlers.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
-		loginHandler(authService, w, r)
-	})
-	authHandlers.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
-		registerHandler(authService, w, r)
-	})
-
-	return authHandlers
+type AuthHandler struct {
+	AuthService services.AuthServiceInterface
 }
 
-func loginHandler(authService AuthServiceInterface, w http.ResponseWriter, r *http.Request) {
+func NewAuthHandler(authService services.AuthServiceInterface) *AuthHandler {
+	return &AuthHandler{
+		AuthService: authService,
+	}
+}
+
+func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	var user modals.LoginUserParams
 	if err := utils.ParseJSON(r, &user); err != nil {
@@ -39,7 +34,7 @@ func loginHandler(authService AuthServiceInterface, w http.ResponseWriter, r *ht
 		return
 	}
 
-	loggedInUser, err := authService.Login(r.Context(), user)
+	loggedInUser, err := h.AuthService.Login(r.Context(), user)
 	if loggedInUser == nil {
 		utils.WriteError(w, err, http.StatusFound)
 		return
@@ -53,7 +48,7 @@ func loginHandler(authService AuthServiceInterface, w http.ResponseWriter, r *ht
 	utils.WriteJSON(w, loggedInUser, http.StatusOK)
 }
 
-func registerHandler(authService AuthServiceInterface, w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	var user modals.CreateUserParams
 	if err := utils.ParseJSON(r, &user); err != nil {
@@ -67,7 +62,7 @@ func registerHandler(authService AuthServiceInterface, w http.ResponseWriter, r 
 		return
 	}
 
-	registeredUser, err := authService.Register(r.Context(), user)
+	registeredUser, err := h.AuthService.Register(r.Context(), user)
 	if err != nil {
 		utils.WriteError(w, err, http.StatusInternalServerError)
 		return

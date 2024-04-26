@@ -11,7 +11,8 @@ import (
 	"time"
 
 	"github.com/MalshanPerera/go-expense-tracker/database"
-	"github.com/MalshanPerera/go-expense-tracker/server"
+	server "github.com/MalshanPerera/go-expense-tracker/server"
+
 	_ "github.com/joho/godotenv/autoload"
 )
 

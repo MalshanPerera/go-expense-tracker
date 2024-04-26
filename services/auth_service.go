@@ -18,18 +18,13 @@ type AuthService struct {
 	queries *sqlc.Queries
 }
 
-type AuthServiceParams struct {
-	DB      *pgxpool.Pool
-	Queries *sqlc.Queries
-}
-
 type AuthServiceInterface interface {
 	Login(ctx context.Context, userPayload modals.LoginUserParams) (*UserResponse, error)
 	Register(ctx context.Context, userPayload modals.CreateUserParams) (*UserResponse, error)
 }
 
-func NewAuthService(params AuthServiceParams) AuthServiceInterface {
-	return &AuthService{db: params.DB, queries: params.Queries}
+func NewAuthService(db *pgxpool.Pool, queries *sqlc.Queries) AuthServiceInterface {
+	return &AuthService{db: db, queries: queries}
 }
 
 func (c *AuthService) Login(ctx context.Context, userPayload modals.LoginUserParams) (*UserResponse, error) {

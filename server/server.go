@@ -1,4 +1,4 @@
-package server
+package core
 
 import (
 	"fmt"
@@ -38,9 +38,11 @@ func NewServer() *http.Server {
 		middlewares.Logger,
 	)
 
+	handler := routes.NewRoute()
+
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", getPort()),
-		Handler:      stack(routes.RegisterRoutes()),
+		Handler:      stack(handler),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,

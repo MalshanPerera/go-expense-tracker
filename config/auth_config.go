@@ -3,13 +3,13 @@ package config
 import "os"
 
 type AuthConfig struct {
-	AccessSecret  string
-	RefreshSecret string
+	JwtSecret string
+	JwtExpiry string
 }
 
 func LoadAuthConfig() AuthConfig {
 	return AuthConfig{
-		AccessSecret:  os.Getenv("ACCESS_SECRET"),
-		RefreshSecret: os.Getenv("REFRESH_SECRET"),
+		JwtSecret: os.Getenv("JWT_SECRET"),
+		JwtExpiry: os.Getenv("JWT_EXPIRED"),
 	}
 }

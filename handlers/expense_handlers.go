@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/MalshanPerera/go-expense-tracker/services"
+	"github.com/labstack/echo"
 )
 
 type ExpenseHandler struct {
@@ -16,31 +17,18 @@ func NewExpenseHandler(expenseService services.ExpenseServiceInterface) *Expense
 	}
 }
 
-func (h *ExpenseHandler) GetExpense(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Get Handler"))
-	if err != nil {
-		return
-	}
+func (h *ExpenseHandler) GetExpense(c echo.Context) error {
+	return c.String(http.StatusOK, "Get Handler")
 }
 
-func (h *ExpenseHandler) CreateExpense(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Create Handler"))
-	if err != nil {
-		return
-	}
-
+func (h *ExpenseHandler) CreateExpense(c echo.Context) error {
+	return c.String(http.StatusOK, "Create Handler")
 }
 
-func (h *ExpenseHandler) UpdateExpense(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Update Handler"))
-	if err != nil {
-		return
-	}
+func (h *ExpenseHandler) UpdateExpense(c echo.Context) error {
+	return c.String(http.StatusOK, "Update Handler")
 }
 
-func (h *ExpenseHandler) DeleteExpense(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Delete Handler"))
-	if err != nil {
-		return
-	}
+func (h *ExpenseHandler) DeleteExpense(c echo.Context) error {
+	return c.String(http.StatusOK, "Delete Handler")
 }

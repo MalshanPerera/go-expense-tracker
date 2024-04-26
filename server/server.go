@@ -3,53 +3,50 @@ package core
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
-	"time"
 
-	"github.com/MalshanPerera/go-expense-tracker/middlewares"
-	"github.com/MalshanPerera/go-expense-tracker/routes"
-	"github.com/rs/cors"
+	"github.com/MalshanPerera/go-expense-tracker/config"
+	"github.com/MalshanPerera/go-expense-tracker/database"
+	"github.com/MalshanPerera/go-expense-tracker/database/sqlc"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
-func getPort() int {
-	port, err := strconv.Atoi(os.Getenv("PORT"))
-	if err != nil {
-		port = 3000
-	}
-
-	return port
+type Server struct {
+	Echo    *echo.Echo
+	Config  *config.Config
+	DB      *pgxpool.Pool
+	Queries *sqlc.Queries
 }
 
-func NewServer() *http.Server {
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"https://*", "http://*"},
-		AllowedMethods: []string{
-			http.MethodPost,
-			http.MethodGet,
-			http.MethodDelete,
-			http.MethodPatch,
-		},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: false,
-	})
+func NewServer(cfg *config.Config) *Server {
 
-	stack := middlewares.CreateStack(
-		middlewares.Logger,
-	)
+	db := database.Connect(cfg)
 
-	handler := routes.NewRoute()
-
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", getPort()),
-		Handler:      stack(handler),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	return &Server{
+		Echo:    echo.New(),
+		Config:  cfg,
+		DB:      db,
+		Queries: sqlc.New(db),
 	}
+}
 
-	// Wrap the server with the CORS middleware.
-	server.Handler = c.Handler(server.Handler)
+func (server *Server) Start() error {
 
-	return server
+	server.Echo.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${method} ${status} ${uri} ${latency_human}\n",
+	}))
+	server.Echo.Use(middleware.Recover())
+
+	server.Echo.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"https://*", "http://*"},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowMethods:     []string{http.MethodPost, http.MethodGet, http.MethodDelete, http.MethodPatch},
+		MaxAge:           86400,
+		AllowCredentials: false,
+	}))
+
+	err := server.Echo.Start(fmt.Sprintf(":%s", server.Config.HTTP.Port))
+
+	return err
 }

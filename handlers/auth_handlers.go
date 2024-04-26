@@ -8,6 +8,7 @@ import (
 	"github.com/MalshanPerera/go-expense-tracker/services"
 	"github.com/MalshanPerera/go-expense-tracker/utils"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo"
 )
 
 type AuthHandler struct {
@@ -20,54 +21,47 @@ func NewAuthHandler(authService services.AuthServiceInterface) *AuthHandler {
 	}
 }
 
-func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) LoginHandler(c echo.Context) error {
 
 	var user modals.LoginUserParams
-	if err := utils.ParseJSON(r, &user); err != nil {
-		utils.WriteError(w, err, http.StatusBadRequest)
-		return
+	if err := c.Bind(&user); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
 	}
 
 	if err := utils.Validate.Struct(user); err != nil {
 		errors := err.(validator.ValidationErrors)
-		utils.WriteError(w, fmt.Errorf("invalid payload: %v", errors), http.StatusBadRequest)
-		return
+		return c.JSON(http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
 	}
 
-	loggedInUser, err := h.AuthService.Login(r.Context(), user)
+	loggedInUser, err := h.AuthService.Login(c.Request().Context(), user)
 	if loggedInUser == nil {
-		utils.WriteError(w, err, http.StatusFound)
-		return
+		return c.JSON(http.StatusFound, err)
 	}
 
 	if err != nil {
-		utils.WriteError(w, err, http.StatusInternalServerError)
-		return
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	utils.WriteJSON(w, loggedInUser, http.StatusOK)
+	return c.JSON(http.StatusOK, loggedInUser)
 }
 
-func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) RegisterHandler(c echo.Context) error {
 
 	var user modals.CreateUserParams
-	if err := utils.ParseJSON(r, &user); err != nil {
-		utils.WriteError(w, err, http.StatusBadRequest)
-		return
+	if err := c.Bind(&user); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
 	}
 
 	if err := utils.Validate.Struct(user); err != nil {
 		errors := err.(validator.ValidationErrors)
-		utils.WriteError(w, fmt.Errorf("invalid payload: %v", errors), http.StatusBadRequest)
-		return
+		return c.JSON(http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
 	}
 
-	registeredUser, err := h.AuthService.Register(r.Context(), user)
+	registeredUser, err := h.AuthService.Register(c.Request().Context(), user)
 	if err != nil {
-		utils.WriteError(w, err, http.StatusInternalServerError)
-		return
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 
-	utils.WriteJSON(w, registeredUser, http.StatusOK)
+	return c.JSON(http.StatusOK, registeredUser)
 
 }

@@ -1,35 +1,23 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/MalshanPerera/go-expense-tracker/handlers"
+	"github.com/labstack/echo"
 )
 
 type AuthRoute struct {
+	V1      *echo.Group
 	Handler *handlers.AuthHandler
 }
 
-func NewAuthRoute(authHandler *handlers.AuthHandler) *AuthRoute {
+func NewAuthRoute(v1 *echo.Group, authHandler *handlers.AuthHandler) *AuthRoute {
 	return &AuthRoute{
+		V1:      v1,
 		Handler: authHandler,
 	}
 }
 
-func (route *AuthRoute) RegisterAuthRoutes() http.Handler {
-	authHandlers := http.NewServeMux()
-
-	handlersMap := map[string]func(w http.ResponseWriter, r *http.Request){
-		"/login":    route.Handler.LoginHandler,
-		"/register": route.Handler.RegisterHandler,
-	}
-
-	for pattern, handlerFunc := range handlersMap {
-		handler := handlers.HandleFunc(handlerFunc)
-		authHandlers.HandleFunc(pattern, handler)
-	}
-
-	authHandlers.Handle("/auth/", http.StripPrefix("/auth", authHandlers))
-
-	return authHandlers
+func (route *AuthRoute) RegisterAuthRoutes() {
+	route.V1.POST("/auth/login", route.Handler.LoginHandler)
+	route.V1.POST("/auth/register", route.Handler.RegisterHandler)
 }

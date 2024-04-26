@@ -1,23 +1,23 @@
 package routes
 
 import (
-	"net/http"
-
-	"github.com/MalshanPerera/go-expense-tracker/database"
-	"github.com/MalshanPerera/go-expense-tracker/database/sqlc"
 	"github.com/MalshanPerera/go-expense-tracker/handlers"
-	"github.com/MalshanPerera/go-expense-tracker/middlewares"
+	m "github.com/MalshanPerera/go-expense-tracker/middlewares"
 	"github.com/MalshanPerera/go-expense-tracker/services"
+
+	s "github.com/MalshanPerera/go-expense-tracker/server"
 )
 
 type Route struct {
+	Server         *s.Server
 	AuthHandler    *handlers.AuthHandler
 	ExpenseHandler *handlers.ExpenseHandler
 }
 
-func NewRoute() http.Handler {
-	db := database.GetDB()
-	queries := sqlc.New(db)
+func NewRoute(server *s.Server) *Route {
+
+	db := server.DB
+	queries := server.Queries
 
 	authService := services.NewAuthService(db, queries)
 	expenseService := services.NewExpenseService(db, queries)
@@ -25,37 +25,24 @@ func NewRoute() http.Handler {
 	authHandler := handlers.NewAuthHandler(authService)
 	expenseHandler := handlers.NewExpenseHandler(expenseService)
 
-	return NewRouter(&Route{
+	return &Route{
+		Server:         server,
 		AuthHandler:    authHandler,
 		ExpenseHandler: expenseHandler,
-	})
+	}
 }
 
-func NewRouter(r *Route) http.Handler {
-	router := http.NewServeMux()
+func (r *Route) RegisterRoutes() {
 
-	apiV1 := r.registerRoutes()
-	router.Handle("/api/v1/", http.StripPrefix("/api/v1", apiV1))
+	v1 := r.Server.Echo.Group("/api/v1")
 
-	return router
-}
+	authRoute := NewAuthRoute(v1, r.AuthHandler)
+	authRoute.RegisterAuthRoutes()
 
-func (r *Route) registerRoutes() *http.ServeMux {
-	apiV1 := http.NewServeMux()
+	protectedRoutes := v1.Group("")
+	protectedRoutes.Use(m.IsAuthenticated)
 
-	authRoute := NewAuthRoute(r.AuthHandler)
-	expenseRoute := NewExpenseRoute(r.ExpenseHandler)
+	expenseRoute := NewExpenseRoute(protectedRoutes, r.ExpenseHandler)
+	expenseRoute.RegisterExpenseRoutes()
 
-	initHandler(apiV1, "/auth/", authRoute.RegisterAuthRoutes())
-	initHandler(apiV1, "/expense", r.registerProtectedRoutes(expenseRoute.RegisterExpenseRoutes()))
-
-	return apiV1
-}
-
-func (r *Route) registerProtectedRoutes(handler http.Handler) http.Handler {
-	return middlewares.CreateStack(middlewares.IsAuthenticated)(handler)
-}
-
-func initHandler(mux *http.ServeMux, pattern string, handler http.Handler) {
-	mux.Handle(pattern, handler)
 }

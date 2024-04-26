@@ -5,27 +5,20 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/MalshanPerera/go-expense-tracker/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var db *pgxpool.Pool
 
-var (
-	database = os.Getenv("DB_DATABASE")
-	password = os.Getenv("DB_PASSWORD")
-	username = os.Getenv("DB_USERNAME")
-	port     = os.Getenv("DB_PORT")
-	host     = os.Getenv("DB_HOST")
-)
-
-func createConnStr() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
+func createConnStr(cfg *config.Config) string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", cfg.DB.User, cfg.DB.Password, cfg.DB.Host, cfg.DB.Port, cfg.DB.Name)
 }
 
 // Use pgxpool for concurrent connections
 // if you have multiple threads working with a DB at the same time, you must use pgxpool
-func Connect() {
-	connStr := createConnStr()
+func Connect(cfg *config.Config) *pgxpool.Pool {
+	connStr := createConnStr(cfg)
 
 	var err error
 
@@ -42,12 +35,10 @@ func Connect() {
 	}
 
 	fmt.Println("Connected to database")
+
+	return db
 }
 
 func Close() {
 	db.Close()
-}
-
-func GetDB() *pgxpool.Pool {
-	return db
 }

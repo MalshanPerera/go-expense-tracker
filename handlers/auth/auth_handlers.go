@@ -10,22 +10,22 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type AuthControllerInterface services.AuthServiceInterface
+type AuthServiceInterface services.AuthServiceInterface
 
-func Init(authController AuthControllerInterface) http.Handler {
+func Init(authService AuthServiceInterface) http.Handler {
 	authHandlers := http.NewServeMux()
 
 	authHandlers.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
-		loginHandler(authController, w, r)
+		loginHandler(authService, w, r)
 	})
 	authHandlers.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
-		registerHandler(authController, w, r)
+		registerHandler(authService, w, r)
 	})
 
 	return authHandlers
 }
 
-func loginHandler(authController AuthControllerInterface, w http.ResponseWriter, r *http.Request) {
+func loginHandler(authService AuthServiceInterface, w http.ResponseWriter, r *http.Request) {
 
 	var user modals.LoginUserParams
 	if err := utils.ParseJSON(r, &user); err != nil {
@@ -39,7 +39,7 @@ func loginHandler(authController AuthControllerInterface, w http.ResponseWriter,
 		return
 	}
 
-	loggedInUser, err := authController.Login(r.Context(), user)
+	loggedInUser, err := authService.Login(r.Context(), user)
 	if loggedInUser == nil {
 		utils.WriteError(w, err, http.StatusFound)
 		return
@@ -53,7 +53,7 @@ func loginHandler(authController AuthControllerInterface, w http.ResponseWriter,
 	utils.WriteJSON(w, loggedInUser, http.StatusOK)
 }
 
-func registerHandler(authController AuthControllerInterface, w http.ResponseWriter, r *http.Request) {
+func registerHandler(authService AuthServiceInterface, w http.ResponseWriter, r *http.Request) {
 
 	var user modals.CreateUserParams
 	if err := utils.ParseJSON(r, &user); err != nil {
@@ -67,7 +67,7 @@ func registerHandler(authController AuthControllerInterface, w http.ResponseWrit
 		return
 	}
 
-	registeredUser, err := authController.Register(r.Context(), user)
+	registeredUser, err := authService.Register(r.Context(), user)
 	if err != nil {
 		utils.WriteError(w, err, http.StatusInternalServerError)
 		return

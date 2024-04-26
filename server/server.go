@@ -50,3 +50,7 @@ func (server *Server) Start() error {
 
 	return err
 }
+
+func (server *Server) Close() {
+	server.DB.Close()
+}

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/MalshanPerera/go-expense-tracker/config"
-	"github.com/MalshanPerera/go-expense-tracker/database"
 	"github.com/MalshanPerera/go-expense-tracker/routes"
 	server "github.com/MalshanPerera/go-expense-tracker/server"
 
@@ -19,12 +18,12 @@ import (
 
 func main() {
 	cfg := config.NewConfig()
-	defer database.Close()
 
 	app := server.NewServer(cfg)
+	defer app.Close()
 
-	// Register routes
-	routes.NewRoute(app).RegisterRoutes()
+	routes := routes.NewRoute(app)
+	routes.RegisterRoutes()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -32,22 +31,30 @@ func main() {
 	go func() {
 		log.Printf("Server is running at http://localhost%s\n", cfg.HTTP.Port)
 
-		err := app.Start()
-
-		if errors.Is(err, http.ErrServerClosed) {
-			log.Println("Server has shut down.")
-		} else if err != nil {
+		if err := app.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Server failed to start: %v\n", err)
-			os.Exit(1)
+		} else {
+			log.Println("Server has shut down.")
 		}
 
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
 	<-ctx.Done()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := app.Echo.Shutdown(ctx); err != nil {
-		app.Echo.Logger.Fatal(err)
+
+	shutdownError := make(chan error, 1)
+	go func() {
+		shutdownError <- app.Echo.Shutdown(ctxShutdown)
+	}()
+
+	select {
+	case err := <-shutdownError:
+		if err != nil {
+			app.Echo.Logger.Fatal(err)
+		}
+	case <-ctxShutdown.Done():
+		app.Echo.Logger.Fatal("shutdown timeout")
 	}
 }
